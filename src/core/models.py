@@ -256,7 +256,15 @@ class ValidationResult(BaseModel):
     @property
     def needs_review(self) -> bool:
         """Check if document needs human review."""
-        return self.overall_status == ValidationStatus.WARNING or self.quality_score < 80.0
+        # Check if any validation check has WARNING status
+        has_warning = any([
+            self.overall_status == ValidationStatus.WARNING,
+            self.smart_criteria_check == ValidationStatus.WARNING,
+            self.completeness_check == ValidationStatus.WARNING,
+            self.consistency_check == ValidationStatus.WARNING,
+            self.traceability_check == ValidationStatus.WARNING if self.traceability_check else False
+        ])
+        return has_warning or self.quality_score < 80.0
 
 
 # ============================================================================
