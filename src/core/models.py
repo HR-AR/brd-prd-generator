@@ -32,15 +32,24 @@ class ValidationStatus(str, Enum):
     WARNING = "warning"
 
 
+class Priority(str, Enum):
+    """Priority levels for objectives and requirements."""
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
 # ============================================================================
 # BRD Models
 # ============================================================================
 
 class BusinessObjective(BaseModel):
     """A single business objective with SMART criteria."""
-    title: str = Field(..., min_length=5, max_length=200)
+    objective_id: str = Field(..., pattern="^OBJ-\\d{3}$")
     description: str = Field(..., min_length=20)
     success_criteria: List[str] = Field(..., min_length=1)
+    business_value: str = Field(..., min_length=10)
+    priority: Priority
     kpi_metrics: Optional[List[str]] = Field(default=None)
 
     @field_validator("success_criteria")
@@ -109,26 +118,22 @@ class BRDDocument(BaseModel):
 
 class UserStory(BaseModel):
     """User story following standard format."""
-    id: str = Field(..., pattern="^US-[0-9]{4}$")
-    persona: str
-    goal: str
-    benefit: str
+    story_id: str = Field(..., pattern="^US-\\d{3}$")
+    persona_id: Optional[str] = Field(None, pattern="^PERSONA-\\d{3}$")
+    story: str = Field(..., min_length=20)
     acceptance_criteria: List[str] = Field(..., min_length=1)
-    priority: str = Field(..., pattern="^(P0|P1|P2|P3)$")
-
-    @property
-    def story_text(self) -> str:
-        """Generate standard user story text."""
-        return f"As a {self.persona}, I want to {self.goal}, so that {self.benefit}"
+    priority: Priority
+    story_points: int = Field(..., ge=1, le=13)
+    dependencies: List[str] = Field(default_factory=list)
 
 
 class TechnicalRequirement(BaseModel):
     """Technical requirement specification."""
-    id: str = Field(..., pattern="^TR-[0-9]{4}$")
-    category: str  # performance, security, scalability, etc.
+    requirement_id: str = Field(..., pattern="^TR-\\d{3}$")
+    category: str  # architecture, integration, data, infrastructure
     description: str = Field(..., min_length=20)
-    acceptance_criteria: str
-    priority: str = Field(..., pattern="^(critical|high|medium|low)$")
+    technology_stack: List[str] = Field(default_factory=list)
+    constraints: List[str] = Field(default_factory=list)
 
 
 class APIEndpoint(BaseModel):

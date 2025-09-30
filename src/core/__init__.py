@@ -5,10 +5,9 @@ Core module for BRD/PRD Generator.
 from .models import (
     # Enums
     DocumentType,
-    DocumentStatus,
-    Priority,
     ValidationStatus,
     ComplexityLevel,
+    Priority,
 
     # Core Models
     BusinessObjective,
@@ -66,10 +65,9 @@ from .exceptions import (
 __all__ = [
     # Enums
     'DocumentType',
-    'DocumentStatus',
-    'Priority',
     'ValidationStatus',
     'ComplexityLevel',
+    'Priority',
 
     # Core Models
     'BusinessObjective',

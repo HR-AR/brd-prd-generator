@@ -24,6 +24,7 @@ from src.core.models import (
     DocumentType,
     ComplexityLevel,
     ValidationStatus,
+    Priority,
 )
 
 
@@ -33,25 +34,30 @@ class TestBusinessObjective:
     def test_valid_business_objective(self):
         """Test creating a valid business objective."""
         obj = BusinessObjective(
-            title="Reduce document creation time",
+            objective_id="OBJ-001",
             description="Implement automated BRD/PRD generation to reduce creation time from weeks to minutes",
             success_criteria=[
                 "Documents generated in under 2 minutes",
                 "95% of documents pass quality validation",
                 "Cost per document under $2.00"
             ],
+            business_value="Reduce document creation time by 99% and save thousands of hours annually",
+            priority=Priority.HIGH,
             kpi_metrics=["Time to document", "Quality score", "Cost per document"]
         )
-        assert obj.title == "Reduce document creation time"
+        assert obj.objective_id == "OBJ-001"
         assert len(obj.success_criteria) == 3
+        assert obj.priority == Priority.HIGH
 
     def test_invalid_success_criteria(self):
         """Test that vague success criteria are rejected."""
         with pytest.raises(ValidationError) as excinfo:
             BusinessObjective(
-                title="Improve system",
+                objective_id="OBJ-002",
                 description="Make the system better in various ways",
-                success_criteria=["Better"]  # Too vague
+                success_criteria=["Better"],  # Too vague
+                business_value="Improve overall system performance",
+                priority=Priority.MEDIUM
             )
         assert "too vague" in str(excinfo.value).lower()
 
@@ -70,12 +76,14 @@ class TestBRDDocument:
             "problem_statement": "Manual document creation is time-consuming, error-prone, and lacks consistency across teams and projects.",
             "objectives": [
                 {
-                    "title": "Reduce document creation time",
+                    "objective_id": "OBJ-001",
                     "description": "Automate BRD/PRD generation to reduce time from weeks to minutes",
                     "success_criteria": [
                         "Document generation completed in under 2 minutes",
                         "Support for multiple document formats"
-                    ]
+                    ],
+                    "business_value": "Reduce document creation time by 99% and save thousands of hours annually",
+                    "priority": "high"
                 }
             ],
             "scope": {
@@ -121,31 +129,34 @@ class TestUserStory:
     def test_valid_user_story(self):
         """Test creating a valid user story."""
         story = UserStory(
-            id="US-0001",
-            persona="Product Manager",
-            goal="generate a BRD from unstructured ideas",
-            benefit="I can quickly formalize requirements",
+            story_id="US-001",
+            persona_id="PERSONA-001",
+            story="As a Product Manager, I want to generate a BRD from unstructured ideas so that I can quickly formalize requirements",
             acceptance_criteria=[
                 "Input accepts unstructured text",
                 "Output is properly formatted BRD",
                 "Generation takes less than 45 seconds"
             ],
-            priority="P0"
+            priority=Priority.HIGH,
+            story_points=5,
+            dependencies=[]
         )
-        assert story.story_text == "As a Product Manager, I want to generate a BRD from unstructured ideas, so that I can quickly formalize requirements"
+        assert "Product Manager" in story.story
+        assert story.priority == Priority.HIGH
 
     def test_invalid_priority(self):
-        """Test that invalid priority is rejected."""
+        """Test that invalid story points is rejected."""
         with pytest.raises(ValidationError) as excinfo:
             UserStory(
-                id="US-0001",
-                persona="User",
-                goal="do something",
-                benefit="it works",
+                story_id="US-001",
+                persona_id="PERSONA-001",
+                story="As a User, I want to do something so that it works",
                 acceptance_criteria=["It works"],
-                priority="P4"  # Invalid priority
+                priority=Priority.LOW,
+                story_points=20,  # Invalid - should be 1-13
+                dependencies=[]
             )
-        assert "priority" in str(excinfo.value)
+        assert "story_points" in str(excinfo.value)
 
 
 class TestPRDDocument:
@@ -163,12 +174,13 @@ class TestPRDDocument:
             "value_proposition": "Reduce document creation time by 90% while ensuring consistent quality",
             "user_stories": [
                 {
-                    "id": "US-0001",
-                    "persona": "Product Manager",
-                    "goal": "generate documents quickly",
-                    "benefit": "I can focus on strategy",
+                    "story_id": "US-001",
+                    "persona_id": "PERSONA-001",
+                    "story": "As a Product Manager, I want to generate documents quickly so that I can focus on strategy",
                     "acceptance_criteria": ["Documents generated in < 2 minutes"],
-                    "priority": "P0"
+                    "priority": "high",
+                    "story_points": 5,
+                    "dependencies": []
                 }
             ],
             "features": [
@@ -176,11 +188,11 @@ class TestPRDDocument:
             ],
             "technical_requirements": [
                 {
-                    "id": "TR-0001",
+                    "requirement_id": "TR-001",
                     "category": "performance",
                     "description": "System must generate documents in under 60 seconds",
-                    "acceptance_criteria": "95% of generations complete in < 60s",
-                    "priority": "critical"
+                    "technology_stack": ["Python", "FastAPI"],
+                    "constraints": ["Must handle concurrent requests"]
                 }
             ],
             "technology_stack": ["Python", "FastAPI", "Pydantic"],
