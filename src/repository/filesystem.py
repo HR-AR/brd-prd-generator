@@ -238,7 +238,7 @@ class FileSystemRepository(BaseRepository):
         # Apply updates
         document_dict = document.model_dump()
         document_dict.update(updates)
-        document_dict["last_modified"] = datetime.now().isoformat()
+        document_dict["updated_at"] = datetime.now().isoformat()
 
         # Create updated document
         updated_document = BRDDocument(**document_dict)
@@ -262,7 +262,7 @@ class FileSystemRepository(BaseRepository):
         # Apply updates
         document_dict = document.model_dump()
         document_dict.update(updates)
-        document_dict["last_modified"] = datetime.now().isoformat()
+        document_dict["updated_at"] = datetime.now().isoformat()
 
         # Create updated document
         updated_document = PRDDocument(**document_dict)
@@ -349,8 +349,8 @@ class FileSystemRepository(BaseRepository):
                         results.append({
                             "document_id": document_dict.get("document_id"),
                             "document_type": doc_type,
-                            "title": document_dict.get("title") or document_dict.get("project_name") or document_dict.get("product_name"),
-                            "created_date": document_dict.get("created_date"),
+                            "title": document_dict.get("title") or document_dict.get("product_name"),
+                            "created_at": document_dict.get("created_at"),
                             "match_preview": self._get_match_preview(document_str, query_lower)
                         })
 

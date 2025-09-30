@@ -83,8 +83,8 @@ class BRDDocument(BaseModel):
     updated_at: Optional[datetime] = None
 
     # Core Content
-    title: str = Field(..., min_length=10, max_length=200)
-    executive_summary: str = Field(..., min_length=100, max_length=2000)
+    title: str = Field(..., min_length=10, max_length=300)
+    executive_summary: str = Field(..., min_length=100, max_length=5000)
     business_context: str = Field(..., min_length=200)
     problem_statement: str = Field(..., min_length=100)
 
@@ -158,8 +158,8 @@ class PRDDocument(BaseModel):
     related_brd_id: Optional[str] = Field(default=None, pattern="^BRD-[0-9]{6}$")
 
     # Product Overview
-    product_name: str = Field(..., min_length=3, max_length=100)
-    product_vision: str = Field(..., min_length=50, max_length=500)
+    product_name: str = Field(..., min_length=3, max_length=200)
+    product_vision: str = Field(..., min_length=50, max_length=2000)
     target_audience: List[str] = Field(..., min_length=1)
     value_proposition: str = Field(..., min_length=50)
 
@@ -198,7 +198,7 @@ class PRDDocument(BaseModel):
 
 class GenerationRequest(BaseModel):
     """Request model for document generation."""
-    user_idea: str = Field(..., min_length=50, max_length=10000)
+    user_idea: str = Field(..., min_length=50, max_length=50000)
     document_type: DocumentType = DocumentType.BOTH
     complexity: ComplexityLevel = ComplexityLevel.MODERATE
     max_cost: float = Field(default=2.0, gt=0, le=10.0)

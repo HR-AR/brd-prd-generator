@@ -1,0 +1,28 @@
+{
+  "validation_id": "VAL-20250930140246",
+  "timestamp": "2025-09-30T14:02:46.189964",
+  "result": {
+    "document_id": "PRD-123456",
+    "document_type": "prd",
+    "overall_status": "passed",
+    "quality_score": 90.0,
+    "issues": [
+      {
+        "field": "features",
+        "severity": "warning",
+        "message": "Insufficient features defined",
+        "suggestion": "Add more detailed features"
+      }
+    ],
+    "smart_criteria_check": "passed",
+    "completeness_check": "passed",
+    "consistency_check": "passed",
+    "traceability_check": "passed",
+    "word_count": 902,
+    "readability_score": 45.0,
+    "technical_accuracy_score": 75.0,
+    "recommendations": [
+      "PRD is linked to BRD: BRD-123456"
+    ]
+  }
+}

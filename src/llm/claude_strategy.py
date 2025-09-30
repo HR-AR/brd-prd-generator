@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 import aiohttp
 
+from .response_fixer import fix_brd_response, fix_prd_response
+from .prompt_templates import get_brd_prompt, get_prd_prompt
 from .client import LLMStrategy, LLMConfig
 from ..core.models import (
     BRDDocument,
@@ -151,84 +153,7 @@ class ClaudeStrategy(LLMStrategy):
 
     def _format_prompt_for_brd(self, user_idea: str) -> str:
         """Format prompt for BRD generation."""
-        return f"""
-You are tasked with generating a comprehensive Business Requirements Document (BRD) based on a user's idea.
-
-User's Idea:
-{user_idea}
-
-Please generate a complete BRD with the following JSON structure. Be thorough and professional in your responses:
-
-{{
-    "document_id": "BRD-XXXXXX" (use format BRD-followed by 6 digits),
-    "project_name": "Descriptive project name based on the idea",
-    "version": "1.0.0",
-    "created_date": "{datetime.now().isoformat()}",
-    "status": "draft",
-    "executive_summary": "2-3 paragraph executive summary",
-    "business_context": "Detailed business context and background",
-    "objectives": [
-        {{
-            "objective_id": "OBJ-001",
-            "description": "Clear, SMART objective",
-            "success_criteria": ["Measurable criterion 1", "Measurable criterion 2"],
-            "business_value": "Expected business value",
-            "priority": "high/medium/low"
-        }}
-        // Add 3-5 objectives
-    ],
-    "scope": {{
-        "in_scope": ["Item 1", "Item 2", "Item 3"],
-        "out_of_scope": ["Item 1", "Item 2"]
-    }},
-    "stakeholders": [
-        {{
-            "name": "Stakeholder title/role",
-            "role": "Their role in the project",
-            "interest_influence": "high/medium/low"
-        }}
-        // Add 3-5 key stakeholders
-    ],
-    "requirements": [
-        {{
-            "requirement_id": "BR-001",
-            "category": "functional/non_functional/business/regulatory",
-            "description": "Clear requirement description",
-            "rationale": "Why this is needed",
-            "priority": "must_have/should_have/could_have/wont_have",
-            "acceptance_criteria": ["Criterion 1", "Criterion 2"]
-        }}
-        // Add 8-12 requirements
-    ],
-    "assumptions": ["Assumption 1", "Assumption 2"],
-    "constraints": ["Constraint 1", "Constraint 2"],
-    "risks": [
-        {{
-            "risk_id": "RISK-001",
-            "description": "Risk description",
-            "impact": "high/medium/low",
-            "probability": "high/medium/low",
-            "mitigation": "Mitigation strategy"
-        }}
-        // Add 3-5 risks
-    ],
-    "success_criteria": ["Overall success criterion 1", "Overall success criterion 2"],
-    "timeline_milestones": [
-        {{
-            "milestone": "Milestone name",
-            "target_date": "YYYY-MM-DD",
-            "deliverables": ["Deliverable 1", "Deliverable 2"]
-        }}
-        // Add 3-5 milestones
-    ]
-}}
-
-Important:
-- Ensure all objectives follow SMART criteria
-- Generate realistic, professional content
-- Use appropriate business terminology
-- Return ONLY valid JSON without any additional text or formatting
-"""
+        return get_brd_prompt(user_idea)
 
     def _format_prompt_for_prd(
         self,
@@ -236,152 +161,15 @@ Important:
         brd_document: Optional[BRDDocument] = None
     ) -> str:
         """Format prompt for PRD generation."""
-
-        context = ""
-        if brd_document:
-            context = f"""
-
-Related BRD Context:
-- Project Name: {brd_document.project_name}
-- BRD ID: {brd_document.document_id}
-- Key Objectives: {', '.join([obj.description[:50] for obj in brd_document.objectives[:3]])}
-- Number of Business Requirements: {len(brd_document.requirements)}
-
-Ensure the PRD aligns with and expands upon these business requirements.
-"""
-
-        return f"""
-You are tasked with generating a comprehensive Product Requirements Document (PRD) based on a user's idea.
-
-User's Idea:
-{user_idea}
-{context}
-
-Please generate a complete PRD with the following JSON structure:
-
-{{
-    "document_id": "PRD-XXXXXX" (use format PRD-followed by 6 digits),
-    "product_name": "Product name based on the idea",
-    "version": "1.0.0",
-    "created_date": "{datetime.now().isoformat()}",
-    "status": "draft",
-    "related_brd_id": {f'"{brd_document.document_id}"' if brd_document else 'null'},
-    "product_overview": "Comprehensive product overview",
-    "target_audience": "Detailed target audience description",
-    "user_personas": [
-        {{
-            "persona_id": "PERSONA-001",
-            "name": "Persona Name",
-            "description": "Detailed persona description",
-            "goals": ["Goal 1", "Goal 2"],
-            "pain_points": ["Pain point 1", "Pain point 2"],
-            "technical_proficiency": "low/medium/high"
-        }}
-        // Add 2-3 personas
-    ],
-    "user_stories": [
-        {{
-            "story_id": "US-001",
-            "persona_id": "PERSONA-001",
-            "story": "As a [persona], I want to [action] so that [benefit]",
-            "acceptance_criteria": ["Criterion 1", "Criterion 2"],
-            "priority": "high/medium/low",
-            "story_points": 5,
-            "dependencies": []
-        }}
-        // Add 10-15 user stories
-    ],
-    "functional_requirements": [
-        {{
-            "requirement_id": "FR-001",
-            "feature_name": "Feature name",
-            "description": "Detailed description",
-            "user_stories": ["US-001", "US-002"],
-            "priority": "must_have/should_have/could_have/wont_have",
-            "acceptance_criteria": ["Criterion 1", "Criterion 2"]
-        }}
-        // Add 8-12 functional requirements
-    ],
-    "non_functional_requirements": [
-        {{
-            "requirement_id": "NFR-001",
-            "category": "performance/security/usability/reliability/scalability",
-            "description": "Requirement description",
-            "acceptance_criteria": ["Criterion 1"],
-            "metrics": ["Metric 1"]
-        }}
-        // Add 5-8 non-functional requirements
-    ],
-    "technical_requirements": [
-        {{
-            "requirement_id": "TR-001",
-            "category": "architecture/integration/data/infrastructure",
-            "description": "Technical requirement",
-            "technology_stack": ["Tech 1", "Tech 2"],
-            "constraints": ["Constraint 1"]
-        }}
-        // Add 4-6 technical requirements
-    ],
-    "ui_ux_requirements": {{
-        "design_principles": ["Principle 1", "Principle 2"],
-        "wireframes_needed": ["Screen 1", "Screen 2"],
-        "accessibility_standards": ["WCAG 2.1 Level AA"],
-        "responsive_design": true,
-        "platform_requirements": ["web", "ios", "android"]
-    }},
-    "data_requirements": {{
-        "data_models": ["Model 1", "Model 2"],
-        "data_sources": ["Source 1", "Source 2"],
-        "data_privacy": ["GDPR compliance", "Data encryption"],
-        "retention_policies": ["Policy 1"]
-    }},
-    "integration_requirements": [
-        {{
-            "system": "System name",
-            "integration_type": "api/webhook/batch/realtime",
-            "data_flow": "Description of data flow",
-            "authentication": "Authentication method"
-        }}
-        // Add 2-4 integrations if applicable
-    ],
-    "success_metrics": [
-        {{
-            "metric": "Metric name",
-            "target_value": "Target",
-            "measurement_method": "How to measure",
-            "review_frequency": "Daily/Weekly/Monthly"
-        }}
-        // Add 4-6 success metrics
-    ],
-    "release_plan": {{
-        "mvp_scope": ["Feature 1", "Feature 2"],
-        "phase_1": ["Feature 3", "Feature 4"],
-        "phase_2": ["Feature 5", "Feature 6"],
-        "future_enhancements": ["Enhancement 1"]
-    }},
-    "dependencies": ["Dependency 1", "Dependency 2"],
-    "risks": [
-        {{
-            "risk_id": "RISK-001",
-            "description": "Risk description",
-            "impact": "high/medium/low",
-            "probability": "high/medium/low",
-            "mitigation": "Mitigation strategy"
-        }}
-        // Add 3-5 risks
-    ]
-}}
-
-Important:
-- Generate professional, technically accurate content
-- Ensure user stories follow proper format
-- All requirements must be testable and specific
-- Return ONLY valid JSON without any additional text
-"""
+        brd_id = brd_document.document_id if brd_document else None
+        return get_prd_prompt(user_idea, brd_id)
 
     def _parse_brd_response(self, response: Dict[str, Any]) -> BRDDocument:
         """Parse API response into BRDDocument."""
         try:
+            # Fix common LLM response format errors
+            response = fix_brd_response(response)
+
             # Convert objectives
             objectives = []
             for obj in response.get("objectives", []):
@@ -393,27 +181,23 @@ Important:
                     priority=Priority(obj["priority"])
                 ))
 
-            # Build BRD document
+            # Build document data matching BRDDocument model
             document_data = {
                 "document_id": response.get("document_id", f"BRD-{datetime.now().strftime('%H%M%S')}"),
-                "project_name": response["project_name"],
                 "version": response.get("version", "1.0.0"),
-                "created_date": response.get("created_date", datetime.now().isoformat()),
-                "last_modified": response.get("last_modified", datetime.now().isoformat()),
-                "status": response.get("status", "draft"),
-                "executive_summary": response["executive_summary"],
-                "business_context": response["business_context"],
+                "title": response.get("title", "Untitled Project"),
+                "executive_summary": response.get("executive_summary", ""),
+                "business_context": response.get("business_context", ""),
+                "problem_statement": response.get("problem_statement", ""),
                 "objectives": objectives,
-                "scope": response["scope"],
+                "scope": response.get("scope", {"in_scope": [], "out_of_scope": []}),
                 "stakeholders": response.get("stakeholders", []),
-                "requirements": response.get("requirements", []),
-                "assumptions": response.get("assumptions", []),
-                "constraints": response.get("constraints", []),
-                "risks": response.get("risks", []),
-                "success_criteria": response.get("success_criteria", []),
-                "timeline_milestones": response.get("timeline_milestones", [])
+                "success_metrics": response.get("success_metrics", []),
+                "constraints": response.get("constraints"),
+                "assumptions": response.get("assumptions"),
+                "risks": response.get("risks"),
+                "timeline": response.get("timeline")
             }
-
             return BRDDocument(**document_data)
 
         except (KeyError, ValueError) as e:
@@ -424,12 +208,14 @@ Important:
     def _parse_prd_response(self, response: Dict[str, Any]) -> PRDDocument:
         """Parse API response into PRDDocument."""
         try:
+            # Fix common LLM response format errors
+            response = fix_prd_response(response)
+
             # Convert user stories
             user_stories = []
             for story in response.get("user_stories", []):
                 user_stories.append(UserStory(
                     story_id=story["story_id"],
-                    persona_id=story.get("persona_id"),
                     story=story["story"],
                     acceptance_criteria=story["acceptance_criteria"],
                     priority=Priority(story["priority"]),
@@ -448,29 +234,29 @@ Important:
                     constraints=req.get("constraints", [])
                 ))
 
-            # Build PRD document
+            # Build PRD document matching PRDDocument model
             document_data = {
                 "document_id": response.get("document_id", f"PRD-{datetime.now().strftime('%H%M%S')}"),
-                "product_name": response["product_name"],
                 "version": response.get("version", "1.0.0"),
-                "created_date": response.get("created_date", datetime.now().isoformat()),
-                "last_modified": response.get("last_modified", datetime.now().isoformat()),
-                "status": response.get("status", "draft"),
                 "related_brd_id": response.get("related_brd_id"),
-                "product_overview": response["product_overview"],
-                "target_audience": response["target_audience"],
-                "user_personas": response.get("user_personas", []),
+                "product_name": response.get("product_name", ""),
+                "product_vision": response.get("product_vision", ""),
+                "target_audience": response.get("target_audience", []),
+                "value_proposition": response.get("value_proposition", ""),
                 "user_stories": user_stories,
-                "functional_requirements": response.get("functional_requirements", []),
-                "non_functional_requirements": response.get("non_functional_requirements", []),
+                "features": response.get("features", []),
                 "technical_requirements": technical_requirements,
-                "ui_ux_requirements": response.get("ui_ux_requirements", {}),
-                "data_requirements": response.get("data_requirements", {}),
-                "integration_requirements": response.get("integration_requirements", []),
-                "success_metrics": response.get("success_metrics", []),
-                "release_plan": response.get("release_plan", {}),
-                "dependencies": response.get("dependencies", []),
-                "risks": response.get("risks", [])
+                "technology_stack": response.get("technology_stack", []),
+                "acceptance_criteria": response.get("acceptance_criteria", []),
+                "metrics_and_kpis": response.get("metrics_and_kpis", []),
+                "architecture_overview": response.get("architecture_overview"),
+                "performance_requirements": response.get("performance_requirements"),
+                "security_requirements": response.get("security_requirements"),
+                "compliance_requirements": response.get("compliance_requirements"),
+                "dependencies": response.get("dependencies"),
+                "deployment_requirements": response.get("deployment_requirements"),
+                "data_model": response.get("data_model"),
+                "api_specifications": response.get("api_specifications")
             }
 
             return PRDDocument(**document_data)

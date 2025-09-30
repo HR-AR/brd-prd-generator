@@ -71,11 +71,7 @@ class DocumentValidator:
             ))
             quality_score -= 5
 
-        # Validate requirements
-        if document.requirements:
-            req_issues = self._validate_requirements(document.requirements)
-            issues.extend(req_issues)
-            quality_score -= len(req_issues) * 3
+        # BRDDocument doesn't have requirements field - objectives cover requirements
 
         # Calculate word count
         word_count = self._calculate_word_count(document.model_dump())
@@ -147,13 +143,13 @@ class DocumentValidator:
             issues.extend(tech_issues)
             quality_score -= len(tech_issues) * 3
 
-        # Validate functional requirements
-        if not document.functional_requirements or len(document.functional_requirements) < 5:
+        # Validate features (PRDDocument uses features not functional_requirements)
+        if not document.features or len(document.features) < 5:
             issues.append(ValidationIssue(
-                field="functional_requirements",
+                field="features",
                 severity=ValidationStatus.WARNING,
-                message="Insufficient functional requirements",
-                suggestion="Add more detailed functional requirements"
+                message="Insufficient features defined",
+                suggestion="Add more detailed features"
             ))
             quality_score -= 10
 
@@ -356,9 +352,9 @@ class DocumentValidator:
     def _check_completeness_brd(self, document: BRDDocument) -> float:
         """Check BRD document completeness percentage."""
         required_fields = [
-            "document_id", "project_name", "executive_summary",
-            "business_context", "objectives", "scope",
-            "stakeholders", "requirements", "risks"
+            "document_id", "title", "executive_summary",
+            "business_context", "problem_statement", "objectives", "scope",
+            "stakeholders", "success_metrics"
         ]
 
         present_fields = sum(
@@ -371,9 +367,10 @@ class DocumentValidator:
     def _check_completeness_prd(self, document: PRDDocument) -> float:
         """Check PRD document completeness percentage."""
         required_fields = [
-            "document_id", "product_name", "product_overview",
-            "user_stories", "functional_requirements",
-            "technical_requirements", "ui_ux_requirements"
+            "document_id", "product_name", "product_vision",
+            "user_stories", "features",
+            "technical_requirements", "technology_stack",
+            "acceptance_criteria", "metrics_and_kpis"
         ]
 
         present_fields = sum(
@@ -441,11 +438,11 @@ class DocumentValidator:
                 score -= 10
 
         # Check for API definitions
-        if hasattr(document, 'api_endpoints') and not document.api_endpoints:
+        if hasattr(document, 'api_specifications') and not document.api_specifications:
             score -= 10
 
-        # Check for data requirements
-        if not document.data_requirements:
+        # Check for data model
+        if not hasattr(document, 'data_model') or not document.data_model:
             score -= 15
 
         return max(0, score)

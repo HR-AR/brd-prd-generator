@@ -41,6 +41,7 @@ from ..repository import (
 )
 from .validator import DocumentValidator
 from .prompts import PromptBuilder
+from .multi_llm_generator import MultiLLMGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ class DocumentGenerator:
         self.repository = repository or get_repository()
         self.validator = validator or DocumentValidator()
         self.prompt_builder = prompt_builder or PromptBuilder()
+        self.multi_llm_generator = MultiLLMGenerator(self.llm_factory)
 
     async def generate(
         self,
@@ -172,7 +174,7 @@ class DocumentGenerator:
         chunk_size: int = 3000
     ) -> Tuple[BRDDocument, CostMetadata]:
         """
-        Generate BRD document.
+        Generate BRD document using multi-LLM sequential approach.
 
         Args:
             request: Generation request
@@ -181,24 +183,14 @@ class DocumentGenerator:
         Returns:
             Tuple of (BRDDocument, CostMetadata)
         """
-        logger.info("Generating BRD document")
+        logger.info("Generating BRD document with multi-LLM approach")
 
         # Chunk input if too large
         idea_chunks = self._chunk_text(request.user_idea, chunk_size)
 
-        # Select LLM provider
-        strategy = self.llm_factory.create_strategy(
-            complexity=request.complexity,
-            user_idea=request.user_idea,
-            document_type=DocumentType.BRD,
-            max_cost=request.max_cost
-        )
-
         # Process chunks if needed
         if len(idea_chunks) > 1:
             logger.info(f"Processing {len(idea_chunks)} chunks")
-            # For multiple chunks, process first chunk in detail
-            # and summarize remaining chunks
             main_idea = idea_chunks[0]
             additional_context = "\n\nAdditional context:\n" + "\n".join(
                 f"- {self._summarize_chunk(chunk)}" for chunk in idea_chunks[1:]
@@ -207,7 +199,7 @@ class DocumentGenerator:
         else:
             processed_idea = request.user_idea
 
-        # Create enhanced request with processed idea
+        # Create enhanced request
         enhanced_request = GenerationRequest(
             user_idea=processed_idea,
             document_type=DocumentType.BRD,
@@ -216,17 +208,15 @@ class DocumentGenerator:
             additional_context=request.additional_context
         )
 
-        # Generate BRD
-        brd_document, cost_metadata = await strategy.generate_brd(enhanced_request)
+        # Generate BRD using multi-LLM sequential approach
+        brd_document, cost_metadata = await self.multi_llm_generator.generate_brd_sequential(enhanced_request)
 
         # Ensure document has required fields
         if not brd_document.document_id:
             brd_document.document_id = f"BRD-{datetime.now().strftime('%H%M%S')}"
 
-        if not brd_document.created_date:
-            brd_document.created_date = datetime.now().isoformat()
-
-        brd_document.last_modified = datetime.now().isoformat()
+        # created_at is auto-set by model, update updated_at
+        brd_document.updated_at = datetime.now()
 
         logger.info(f"BRD generated: {brd_document.document_id}, cost: ${cost_metadata.total_cost:.4f}")
         return brd_document, cost_metadata
@@ -238,7 +228,7 @@ class DocumentGenerator:
         chunk_size: int = 3000
     ) -> Tuple[PRDDocument, CostMetadata]:
         """
-        Generate PRD document.
+        Generate PRD document using multi-LLM sequential approach.
 
         Args:
             request: Generation request
@@ -248,18 +238,10 @@ class DocumentGenerator:
         Returns:
             Tuple of (PRDDocument, CostMetadata)
         """
-        logger.info("Generating PRD document")
+        logger.info("Generating PRD document with multi-LLM approach")
 
         # Chunk input if too large
         idea_chunks = self._chunk_text(request.user_idea, chunk_size)
-
-        # Select LLM provider
-        strategy = self.llm_factory.create_strategy(
-            complexity=request.complexity or ComplexityLevel.MODERATE,
-            user_idea=request.user_idea,
-            document_type=DocumentType.PRD,
-            max_cost=request.max_cost
-        )
 
         # Process chunks if needed
         if len(idea_chunks) > 1:
@@ -278,8 +260,8 @@ class DocumentGenerator:
             additional_context=request.additional_context
         )
 
-        # Generate PRD
-        prd_document, cost_metadata = await strategy.generate_prd(
+        # Generate PRD using multi-LLM sequential approach
+        prd_document, cost_metadata = await self.multi_llm_generator.generate_prd_sequential(
             enhanced_request,
             brd_document
         )
@@ -288,10 +270,8 @@ class DocumentGenerator:
         if not prd_document.document_id:
             prd_document.document_id = f"PRD-{datetime.now().strftime('%H%M%S')}"
 
-        if not prd_document.created_date:
-            prd_document.created_date = datetime.now().isoformat()
-
-        prd_document.last_modified = datetime.now().isoformat()
+        # created_at is auto-set by model, update updated_at
+        prd_document.updated_at = datetime.now()
 
         # Link to BRD if provided
         if brd_document:

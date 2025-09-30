@@ -63,7 +63,7 @@ class LLMFactory:
             "model_name": "gpt-4-turbo-preview",
             "max_tokens": 4096,
             "temperature": 0.7,
-            "timeout": 60,
+            "timeout": 120,
             "max_retries": 3,
             "base_delay": 1.0,
             "cost_per_1k_input": 0.01,    # $0.01 per 1K input tokens
@@ -75,7 +75,7 @@ class LLMFactory:
             "model_name": "claude-opus-4-1-20250805",  # Claude Opus 4.1 - Latest and most powerful (Aug 2025)
             "max_tokens": 4096,
             "temperature": 0.7,
-            "timeout": 60,
+            "timeout": 120,
             "max_retries": 3,
             "base_delay": 1.0,
             "cost_per_1k_input": 0.015,   # $15 per 1M tokens = $0.015 per 1K
@@ -84,10 +84,10 @@ class LLMFactory:
             "tokens_per_minute": 100000
         },
         ProviderName.GEMINI: {
-            "model_name": "gemini-1.5-pro",
+            "model_name": "gemini-2.0-flash-exp",
             "max_tokens": 8192,
             "temperature": 0.7,
-            "timeout": 60,
+            "timeout": 120,
             "max_retries": 3,
             "base_delay": 1.0,
             "cost_per_1k_input": 0.00125,  # $0.00125 per 1K input tokens
