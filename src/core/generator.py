@@ -101,7 +101,12 @@ class DocumentGenerator:
         response = GenerationResponse(
             request_id=f"REQ-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             status="processing",
-            created_at=datetime.now().isoformat()
+            generation_metadata={
+                "created_at": datetime.now().isoformat(),
+                "document_type": request.document_type.value,
+                "complexity": request.complexity.value if request.complexity else "moderate"
+            },
+            cost_breakdown={}
         )
 
         try:
@@ -109,12 +114,20 @@ class DocumentGenerator:
             if request.document_type == DocumentType.BRD:
                 brd, brd_cost = await self._generate_brd(request)
                 response.brd_document = brd
-                response.cost_metadata = brd_cost
+                response.cost_breakdown = {
+                    "brd_cost": brd_cost.total_cost,
+                    "total_cost": brd_cost.total_cost
+                }
+                response.generation_metadata["cost_metadata"] = brd_cost.model_dump()
 
             elif request.document_type == DocumentType.PRD:
                 prd, prd_cost = await self._generate_prd(request)
                 response.prd_document = prd
-                response.cost_metadata = prd_cost
+                response.cost_breakdown = {
+                    "prd_cost": prd_cost.total_cost,
+                    "total_cost": prd_cost.total_cost
+                }
+                response.generation_metadata["cost_metadata"] = prd_cost.model_dump()
 
             else:  # BOTH
                 # Generate BRD first
@@ -126,14 +139,20 @@ class DocumentGenerator:
                 response.prd_document = prd
 
                 # Combine costs
-                response.cost_metadata = self._combine_costs(brd_cost, prd_cost)
+                combined_cost = self._combine_costs(brd_cost, prd_cost)
+                response.cost_breakdown = {
+                    "brd_cost": brd_cost.total_cost,
+                    "prd_cost": prd_cost.total_cost,
+                    "total_cost": combined_cost.total_cost
+                }
+                response.generation_metadata["cost_metadata"] = combined_cost.model_dump()
 
             # Validate documents
             await self._validate_and_store(response)
 
             # Update status
             response.status = "completed"
-            response.completed_at = datetime.now().isoformat()
+            response.generation_metadata["completed_at"] = datetime.now().isoformat()
 
             # Save generation history
             await self.repository.save_generation_history(request, response)

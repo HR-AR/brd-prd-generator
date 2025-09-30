@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRD/PRD Generator - AI Document Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .options-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #90caf9;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border: 1px solid #81c784;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .document-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .document-content {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 0 10px 10px 10px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .document-section {
+            margin-bottom: 20px;
+        }
+
+        .document-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .document-section h4 {
+            color: #333;
+            margin: 15px 0 8px 0;
+        }
+
+        .document-section ul, .document-section ol {
+            margin-left: 25px;
+            margin-top: 10px;
+        }
+
+        .document-section li {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+
+        .cost-info {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .download-btn {
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 BRD/PRD Generator</h1>
+            <p>Transform your ideas into professional requirement documents using AI</p>
+        </div>
+
+        <div class="main-card">
+            <form id="generateForm">
+                <div class="form-group">
+                    <label for="userIdea">
+                        📝 Describe Your Idea
+                        <small style="color: #666; font-weight: normal;">(Minimum 50 characters)</small>
+                    </label>
+                    <textarea
+                        id="userIdea"
+                        name="userIdea"
+                        rows="6"
+                        placeholder="Example: I want to build a mobile app for dog walkers that helps them manage their clients, track walks using GPS, handle payments, and send real-time updates to pet owners..."
+                        required
+                        minlength="50"
+                    ></textarea>
+                </div>
+
+                <div class="options-row">
+                    <div class="form-group">
+                        <label for="documentType">📄 Document Type</label>
+                        <select id="documentType" name="documentType">
+                            <option value="both">Both BRD & PRD</option>
+                            <option value="brd">BRD Only</option>
+                            <option value="prd">PRD Only</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="complexity">⚙️ Complexity</label>
+                        <select id="complexity" name="complexity">
+                            <option value="simple">Simple</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="complex">Complex</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxCost">💰 Max Cost ($)</label>
+                        <select id="maxCost" name="maxCost">
+                            <option value="0.5">$0.50</option>
+                            <option value="1.0">$1.00</option>
+                            <option value="2.0" selected>$2.00</option>
+                            <option value="5.0">$5.00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="generate-btn" id="generateBtn">
+                    <span id="btnText">Generate Documents</span>
+                    <span id="btnLoading" class="loading" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div id="statusMessage" class="status-message"></div>
+
+            <div id="results" class="results">
+                <div class="document-tabs">
+                    <button class="tab-btn active" onclick="showTab('brd')" id="brdTab">BRD Document</button>
+                    <button class="tab-btn" onclick="showTab('prd')" id="prdTab">PRD Document</button>
+                    <button class="tab-btn" onclick="showTab('cost')" id="costTab">Cost Analysis</button>
+                </div>
+
+                <div id="documentContent" class="document-content">
+                    <!-- Document content will be inserted here -->
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="download-btn" onclick="downloadDocument('brd')">📥 Download BRD</button>
+                    <button class="download-btn" onclick="downloadDocument('prd')">📥 Download PRD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDocuments = {};
+        let activeTab = 'brd';
+
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userIdea = document.getElementById('userIdea').value;
+            const documentType = document.getElementById('documentType').value;
+            const complexity = document.getElementById('complexity').value;
+            const maxCost = parseFloat(document.getElementById('maxCost').value);
+
+            if (userIdea.length < 50) {
+                showStatus('Please provide at least 50 characters describing your idea.', 'error');
+                return;
+            }
+
+            // Disable button and show loading
+            const btn = document.getElementById('generateBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoading = document.getElementById('btnLoading');
+
+            btn.disabled = true;
+            btnText.textContent = 'Generating...';
+            btnLoading.style.display = 'inline-block';
+
+            showStatus('🔄 Processing your request... This may take a moment.', 'info');
+
+            try {
+                const response = await fetch('/api/v1/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_idea: userIdea,
+                        document_type: documentType,
+                        complexity: complexity,
+                        max_cost: maxCost
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentDocuments = data;
+                    displayResults(data);
+                    showStatus('✅ Documents generated successfully!', 'success');
+                } else {
+                    showStatus(`❌ Error: ${data.detail || 'Failed to generate documents'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Generate Documents';
+                btnLoading.style.display = 'none';
+            }
+        });
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+
+            // Update tabs based on what was generated
+            document.getElementById('brdTab').style.display = data.brd_document ? 'block' : 'none';
+            document.getElementById('prdTab').style.display = data.prd_document ? 'block' : 'none';
+
+            // Show appropriate tab
+            if (data.brd_document) {
+                showTab('brd');
+            } else if (data.prd_document) {
+                showTab('prd');
+            } else {
+                showTab('cost');
+            }
+        }
+
+        function showTab(tab) {
+            activeTab = tab;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tab + 'Tab').classList.add('active');
+
+            // Update content
+            const contentEl = document.getElementById('documentContent');
+
+            if (tab === 'brd' && currentDocuments.brd_document) {
+                contentEl.innerHTML = formatBRD(currentDocuments.brd_document);
+            } else if (tab === 'prd' && currentDocuments.prd_document) {
+                contentEl.innerHTML = formatPRD(currentDocuments.prd_document);
+            } else if (tab === 'cost') {
+                contentEl.innerHTML = formatCost(currentDocuments);
+            }
+        }
+
+        function formatBRD(brd) {
+            let html = '<div class="document-section">';
+            html += `<h3>Business Requirements Document</h3>`;
+            html += `<p><strong>Document ID:</strong> ${brd.document_id}</p>`;
+            html += `<p><strong>Project:</strong> ${brd.project_name || 'N/A'}</p>`;
+            html += `<p><strong>Status:</strong> ${brd.status}</p>`;
+
+            if (brd.executive_summary) {
+                html += `<h4>Executive Summary</h4>`;
+                html += `<p>${brd.executive_summary}</p>`;
+            }
+
+            if (brd.business_context) {
+                html += `<h4>Business Context</h4>`;
+                html += `<p>${brd.business_context}</p>`;
+            }
+
+            if (brd.objectives && brd.objectives.length > 0) {
+                html += `<h4>Business Objectives</h4><ul>`;
+                brd.objectives.forEach(obj => {
+                    html += `<li><strong>${obj.objective_id}:</strong> ${obj.description}`;
+                    if (obj.success_criteria) {
+                        html += `<ul>`;
+                        obj.success_criteria.forEach(criteria => {
+                            html += `<li>${criteria}</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    html += `</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            if (brd.scope) {
+                html += `<h4>Scope</h4>`;
+                if (brd.scope.in_scope) {
+                    html += `<p><strong>In Scope:</strong></p><ul>`;
+                    brd.scope.in_scope.forEach(item => {
+                        html += `<li>${item}</li>`;
+                    });
+                    html += `</ul>`;
+                }
+                if (brd.scope.out_of_scope) {
+                    html += `<p><strong>Out of Scope:</strong></p><ul>`;
+                    brd.scope.out_of_scope.forEach(item => {
+                        html += `<li>${item}</li>`;
+                    });
+                    html += `</ul>`;
+                }
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function formatPRD(prd) {
+            let html = '<div class="document-section">';
+            html += `<h3>Product Requirements Document</h3>`;
+            html += `<p><strong>Document ID:</strong> ${prd.document_id}</p>`;
+            html += `<p><strong>Product:</strong> ${prd.product_name || 'N/A'}</p>`;
+            html += `<p><strong>Status:</strong> ${prd.status}</p>`;
+
+            if (prd.product_overview) {
+                html += `<h4>Product Overview</h4>`;
+                html += `<p>${prd.product_overview}</p>`;
+            }
+
+            if (prd.user_stories && prd.user_stories.length > 0) {
+                html += `<h4>User Stories</h4><ul>`;
+                prd.user_stories.forEach(story => {
+                    html += `<li><strong>${story.story_id}:</strong> ${story.story}`;
+                    if (story.acceptance_criteria) {
+                        html += `<ul>`;
+                        story.acceptance_criteria.forEach(criteria => {
+                            html += `<li>${criteria}</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    html += `</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            if (prd.functional_requirements && prd.functional_requirements.length > 0) {
+                html += `<h4>Functional Requirements</h4><ul>`;
+                prd.functional_requirements.forEach(req => {
+                    html += `<li><strong>${req.requirement_id}:</strong> ${req.feature_name} - ${req.description}</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function formatCost(data) {
+            let html = '<div class="cost-info">';
+            html += `<h3>Generation Cost Analysis</h3>`;
+
+            if (data.cost_breakdown) {
+                html += `<p><strong>Total Cost:</strong> $${data.cost_breakdown.total_cost?.toFixed(4) || '0.00'}</p>`;
+
+                if (data.cost_breakdown.brd_cost) {
+                    html += `<p><strong>BRD Cost:</strong> $${data.cost_breakdown.brd_cost.toFixed(4)}</p>`;
+                }
+                if (data.cost_breakdown.prd_cost) {
+                    html += `<p><strong>PRD Cost:</strong> $${data.cost_breakdown.prd_cost.toFixed(4)}</p>`;
+                }
+            }
+
+            if (data.generation_metadata) {
+                html += `<h4>Generation Details</h4>`;
+                html += `<p><strong>Request ID:</strong> ${data.request_id}</p>`;
+                html += `<p><strong>Status:</strong> ${data.status}</p>`;
+                html += `<p><strong>Generated At:</strong> ${data.generation_metadata.created_at}</p>`;
+
+                if (data.generation_metadata.cost_metadata) {
+                    const meta = data.generation_metadata.cost_metadata;
+                    html += `<p><strong>Provider:</strong> ${meta.provider}</p>`;
+                    html += `<p><strong>Model:</strong> ${meta.model_name}</p>`;
+                    html += `<p><strong>Input Tokens:</strong> ${meta.input_tokens}</p>`;
+                    html += `<p><strong>Output Tokens:</strong> ${meta.output_tokens}</p>`;
+                    html += `<p><strong>Generation Time:</strong> ${(meta.generation_time_ms / 1000).toFixed(2)}s</p>`;
+                }
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function downloadDocument(type) {
+            let document;
+            let filename;
+
+            if (type === 'brd' && currentDocuments.brd_document) {
+                document = currentDocuments.brd_document;
+                filename = `BRD_${document.document_id}_${new Date().toISOString().split('T')[0]}.json`;
+            } else if (type === 'prd' && currentDocuments.prd_document) {
+                document = currentDocuments.prd_document;
+                filename = `PRD_${document.document_id}_${new Date().toISOString().split('T')[0]}.json`;
+            }
+
+            if (document) {
+                const blob = new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+    </script>
+</body>
+</html>

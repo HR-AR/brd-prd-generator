@@ -4,6 +4,7 @@ OpenAI (ChatGPT) strategy implementation.
 
 import json
 import logging
+import asyncio
 from typing import Any, Dict, Optional
 from datetime import datetime
 import aiohttp
@@ -124,7 +125,7 @@ class OpenAIStrategy(LLMStrategy):
 
                     return parsed_content
 
-        except aiohttp.ClientTimeout:
+        except asyncio.TimeoutError:
             raise LLMTimeoutError(
                 f"Request timed out after {self.config.timeout} seconds"
             )

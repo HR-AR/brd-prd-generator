@@ -4,6 +4,7 @@ Claude (Anthropic) strategy implementation.
 
 import json
 import logging
+import asyncio
 from typing import Any, Dict, Optional
 from datetime import datetime
 import aiohttp
@@ -141,7 +142,7 @@ class ClaudeStrategy(LLMStrategy):
 
                     return parsed_content
 
-        except aiohttp.ClientTimeout:
+        except asyncio.TimeoutError:
             raise LLMTimeoutError(
                 f"Request timed out after {self.config.timeout} seconds"
             )

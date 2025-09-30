@@ -205,6 +205,7 @@ class GenerationRequest(BaseModel):
     include_examples: bool = True
     language: str = Field(default="en", pattern="^[a-z]{2}$")
     custom_requirements: Optional[Dict[str, Any]] = None
+    additional_context: Optional[Dict[str, Any]] = None
 
 
 class GenerationResponse(BaseModel):

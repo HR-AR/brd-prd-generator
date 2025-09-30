@@ -5,10 +5,12 @@ Main FastAPI application for BRD/PRD Generator.
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import uvicorn
@@ -72,6 +74,11 @@ app.add_middleware(
 # Add compression middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# Mount static files directory
+static_dir = Path(__file__).parent.parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
 # Include API router
 app.include_router(router)
 
@@ -130,17 +137,22 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Root endpoint
+# Root endpoint - serve the HTML interface
 @app.get("/")
 async def root():
-    """Root endpoint with API information."""
-    return {
-        "name": "BRD/PRD Generator API",
-        "version": "1.0.0",
-        "status": "operational",
-        "documentation": "/docs",
-        "health": "/api/v1/health"
-    }
+    """Serve the HTML interface for document generation."""
+    html_file = Path(__file__).parent.parent / "static" / "index.html"
+    if html_file.exists():
+        return FileResponse(str(html_file))
+    else:
+        # Fallback to API info if HTML not found
+        return {
+            "name": "BRD/PRD Generator API",
+            "version": "1.0.0",
+            "status": "operational",
+            "documentation": "/docs",
+            "health": "/api/v1/health"
+        }
 
 
 # Metrics endpoint (basic)
