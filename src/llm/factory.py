@@ -72,14 +72,14 @@ class LLMFactory:
             "tokens_per_minute": 150000
         },
         ProviderName.CLAUDE: {
-            "model_name": "claude-3-opus-20240229",
+            "model_name": "claude-opus-4-1-20250805",  # Claude Opus 4.1 - Latest and most powerful (Aug 2025)
             "max_tokens": 4096,
             "temperature": 0.7,
             "timeout": 60,
             "max_retries": 3,
             "base_delay": 1.0,
-            "cost_per_1k_input": 0.015,   # $0.015 per 1K input tokens
-            "cost_per_1k_output": 0.075,  # $0.075 per 1K output tokens
+            "cost_per_1k_input": 0.015,   # $15 per 1M tokens = $0.015 per 1K
+            "cost_per_1k_output": 0.075,  # $75 per 1M tokens = $0.075 per 1K
             "requests_per_minute": 1000,
             "tokens_per_minute": 100000
         },

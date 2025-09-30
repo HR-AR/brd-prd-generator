@@ -14,7 +14,9 @@ from ..core.models import (
     GenerationResponse,
     DocumentType,
     ValidationResult,
-    ComplexityLevel
+    ComplexityLevel,
+    BRDDocument,
+    PRDDocument
 )
 from ..core.exceptions import (
     LLMCostExceededError,
@@ -489,3 +491,264 @@ async def detailed_health_check(
     }
 
     return health_status
+
+
+@router.post("/generate-test", response_model=GenerationResponse)
+async def generate_test_document(
+    request: GenerationRequest,
+    client_id: ClientIdDep
+) -> GenerationResponse:
+    """
+    Test endpoint that returns mock BRD/PRD documents without calling LLMs.
+    Use this for testing the UI when LLM APIs are not configured.
+    """
+    from ..core.models import (
+        BRDDocument, PRDDocument, BusinessObjective, UserStory,
+        TechnicalRequirement, Stakeholder,
+        ValidationStatus, Priority, CostMetadata
+    )
+    import random
+
+    # Generate mock BRD if requested
+    brd_doc = None
+    if request.document_type in [DocumentType.BRD, DocumentType.BOTH]:
+        brd_doc = BRDDocument(
+            document_id=f"BRD-{random.randint(100000, 999999)}",
+            title="Water Intake Tracking Mobile Application",
+            problem_statement="Users struggle to maintain proper hydration levels throughout the day, leading to decreased health and productivity. Current solutions lack proper tracking, reminders, and personalized insights that adapt to individual needs and lifestyles.",
+            executive_summary="A comprehensive mobile application designed to revolutionize personal hydration management by providing intelligent tracking, personalized reminders, and actionable insights. The solution targets health-conscious individuals aged 25-45 seeking to improve their daily water intake habits through data-driven approaches and behavioral science principles.",
+            business_context="The global health and wellness market is experiencing rapid growth at 15% CAGR, with digital health applications showing particularly strong adoption among millennials and Gen Z consumers. Hydration apps represent a growing $500M segment with increasing demand for personalized health solutions. Market research indicates significant opportunity for differentiation through AI-driven personalization and gamification features.",
+            objectives=[
+                BusinessObjective(
+                    objective_id=f"OBJ-{random.randint(100, 999):03d}",
+                    description="Achieve 25,000 daily active users within 6 months of launch, representing a 40% increase over industry benchmarks for health tracking applications",
+                    success_criteria=[
+                        "Reach 25,000 DAU milestone by end of month 6",
+                        "Maintain 70% user retention rate after 30 days",
+                        "Achieve average session duration of 3+ minutes per user"
+                    ],
+                    business_value="Increased user engagement drives higher retention rates, enabling premium subscription conversions estimated at $200K annual recurring revenue by year 1",
+                    priority=Priority.HIGH,
+                    kpi_metrics=["Daily Active Users (DAU)", "30-day Retention Rate", "Average Session Duration"]
+                )
+            ],
+            scope={
+                "in_scope": [
+                    "Water intake logging and tracking functionality",
+                    "Personalized reminder system based on user patterns",
+                    "Progress analytics and data visualizations",
+                    "Goal setting and achievement tracking",
+                    "Integration with Apple Health and Google Fit"
+                ],
+                "out_of_scope": [
+                    "Meal and nutrition tracking features",
+                    "Exercise and fitness tracking capabilities",
+                    "Social networking and community features",
+                    "E-commerce and product sales functionality"
+                ]
+            },
+            stakeholders=[
+                Stakeholder(
+                    name="Product Owner",
+                    role="Strategic decision maker and business sponsor, responsible for ROI and product vision",
+                    interest_level="high",
+                    influence_level="high"
+                ),
+                Stakeholder(
+                    name="Engineering Lead",
+                    role="Technical architecture design, development oversight, and technology stack decisions",
+                    interest_level="high",
+                    influence_level="high"
+                )
+            ],
+            success_metrics=[
+                "User Retention: 70% retention rate after 30 days",
+                "Daily Active Users: 25,000+ within 6 months",
+                "App Store Rating: Maintain 4.5+ star rating across platforms",
+                "Conversion Rate: 10% free-to-premium conversion within 90 days"
+            ],
+            assumptions=[
+                "Users have access to smartphones running iOS 14+ or Android 10+",
+                "Users are intrinsically motivated to track hydration habits",
+                "App store approval processes complete within 2 weeks of submission"
+            ],
+            constraints=[
+                "Development budget capped at $150,000 for MVP",
+                "MVP launch timeline of 6 months from project kickoff",
+                "Must comply with HIPAA and GDPR data privacy regulations"
+            ],
+            risks=[
+                {
+                    "risk": "Low user adoption due to high market competition",
+                    "impact": "high",
+                    "mitigation": "Implement aggressive marketing campaign focusing on unique features"
+                }
+            ]
+        )
+
+    # Generate mock PRD if requested
+    prd_doc = None
+    if request.document_type in [DocumentType.PRD, DocumentType.BOTH]:
+        prd_doc = PRDDocument(
+            document_id=f"PRD-{random.randint(100000, 999999)}",
+            related_brd_id=brd_doc.document_id if brd_doc else None,
+            product_name="HydroTrack: Smart Water Intake Companion",
+            product_vision="To become the world's most intelligent hydration tracking platform, helping millions achieve optimal health through personalized water intake management.",
+            target_audience=[
+                "Health-conscious millennials aged 25-35",
+                "Fitness enthusiasts seeking performance optimization",
+                "Office workers with sedentary lifestyles"
+            ],
+            value_proposition="HydroTrack combines AI-driven personalization with behavioral science to deliver smart reminders and insights that adapt to your lifestyle.",
+            user_stories=[
+                UserStory(
+                    story_id=f"US-{random.randint(100, 999):03d}",
+                    story="As a health-conscious user, I want to quickly log my water intake throughout the day so that I can track my progress toward my daily hydration goal",
+                    acceptance_criteria=[
+                        "User can log water intake with one tap",
+                        "Custom amounts can be entered via number pad",
+                        "Daily total updates in real-time"
+                    ],
+                    priority=Priority.HIGH,
+                    story_points=5,
+                    dependencies=[]
+                )
+            ],
+            features=[
+                {
+                    "feature_id": "FEAT-001",
+                    "name": "Quick Log Water Intake",
+                    "description": "One-tap logging with smart defaults",
+                    "priority": "high"
+                }
+            ],
+            technical_requirements=[
+                TechnicalRequirement(
+                    requirement_id=f"TR-{random.randint(100, 999):03d}",
+                    category="architecture",
+                    description="Implement cloud-based backend architecture using microservices pattern for scalability and maintainability with auto-scaling capabilities",
+                    technology_stack=["Node.js", "Express", "MongoDB", "AWS Lambda"],
+                    constraints=["Must support 100k concurrent users"]
+                )
+            ],
+            technology_stack=["React Native", "TypeScript", "Node.js", "MongoDB", "AWS"],
+            acceptance_criteria=[
+                "All core features functional on both iOS and Android",
+                "99.9% crash-free user rate"
+            ],
+            metrics_and_kpis=[
+                "Daily Active Users (DAU)",
+                "User Retention (Day 1, Day 7, Day 30)",
+                "Premium Conversion Rate"
+            ]
+        )
+
+    # Create response
+    response = GenerationResponse(
+        request_id=f"REQ-TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        status="completed",
+        brd_document=brd_doc,
+        prd_document=prd_doc,
+        validation_results=ValidationResult(
+            document_id=brd_doc.document_id if brd_doc else (prd_doc.document_id if prd_doc else "TEST-000000"),
+            document_type=DocumentType.BRD if brd_doc else DocumentType.PRD,
+            overall_status=ValidationStatus.PASSED,
+            quality_score=95.0,
+            issues=[],
+            smart_criteria_check=ValidationStatus.PASSED,
+            completeness_check=ValidationStatus.PASSED,
+            consistency_check=ValidationStatus.PASSED,
+            word_count=1500,
+            readability_score=85.0,
+            recommendations=["Consider adding more KPIs", "Include more specific metrics in objectives"]
+        ) if (brd_doc or prd_doc) else None,
+        generation_metadata={
+            "test_mode": True,
+            "generated_at": datetime.now().isoformat()
+        },
+        cost_breakdown={
+            "total_cost": 0.0112,
+            "brd_cost": 0.005 if brd_doc else 0.0,
+            "prd_cost": 0.0062 if prd_doc else 0.0,
+            "generation_time_ms": 220.0
+        }
+    )
+
+    logger.info(f"Test document generated for client: {client_id}")
+    return response
+
+
+@router.post("/generate-prompt")
+async def generate_prompt(
+    brd_document: Optional[BRDDocument] = None,
+    prd_document: Optional[PRDDocument] = None,
+    client_id: ClientIdDep = None
+) -> Dict[str, Any]:
+    """
+    Generate a Claude prompt from the reviewed BRD and PRD documents.
+    This prompt can be used to create the actual implementation.
+    """
+    if not brd_document and not prd_document:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one document (BRD or PRD) must be provided"
+        )
+
+    prompt_parts = []
+
+    # Start with context
+    prompt_parts.append("# Project Implementation Request\n")
+
+    if brd_document:
+        prompt_parts.append("## Business Requirements (from BRD)\n")
+        prompt_parts.append(f"**Title:** {brd_document.title}\n")
+        prompt_parts.append(f"**Problem Statement:** {brd_document.problem_statement}\n")
+        prompt_parts.append(f"**Executive Summary:** {brd_document.executive_summary}\n")
+
+        if brd_document.objectives:
+            prompt_parts.append("\n### Business Objectives\n")
+            for obj in brd_document.objectives:
+                prompt_parts.append(f"- {obj.description} (Priority: {obj.priority})\n")
+
+        if brd_document.success_metrics:
+            prompt_parts.append("\n### Success Metrics\n")
+            for metric in brd_document.success_metrics:
+                prompt_parts.append(f"- {metric}\n")
+
+    if prd_document:
+        prompt_parts.append("\n## Product Requirements (from PRD)\n")
+        prompt_parts.append(f"**Product Overview:** {prd_document.product_overview}\n")
+        prompt_parts.append(f"**Target Audience:** {prd_document.target_audience}\n")
+
+        if prd_document.user_stories:
+            prompt_parts.append("\n### User Stories\n")
+            for story in prd_document.user_stories[:5]:  # Top 5 stories
+                prompt_parts.append(f"- As a user, {story.description} (Priority: {story.priority})\n")
+
+        if prd_document.technical_requirements:
+            prompt_parts.append("\n### Technical Requirements\n")
+            for req in prd_document.technical_requirements:
+                prompt_parts.append(f"- {req.description} ({req.category})\n")
+
+    # Add implementation request
+    prompt_parts.append("\n## Implementation Request\n")
+    prompt_parts.append("Please help me implement this project by:\n")
+    prompt_parts.append("1. Creating the initial project structure\n")
+    prompt_parts.append("2. Setting up the core architecture\n")
+    prompt_parts.append("3. Implementing the main features\n")
+    prompt_parts.append("4. Adding necessary tests\n")
+    prompt_parts.append("5. Providing deployment instructions\n")
+
+    prompt_parts.append("\nPlease start with the project setup and architecture.")
+
+    prompt = "".join(prompt_parts)
+
+    return {
+        "prompt": prompt,
+        "metadata": {
+            "has_brd": brd_document is not None,
+            "has_prd": prd_document is not None,
+            "prompt_length": len(prompt),
+            "generated_at": datetime.now().isoformat()
+        }
+    }

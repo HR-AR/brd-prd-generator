@@ -297,6 +297,13 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="testMode" style="width: auto;">
+                        <span>🧪 Use Test Mode (instant mock response, no API calls)</span>
+                    </label>
+                </div>
+
                 <button type="submit" class="generate-btn" id="generateBtn">
                     <span id="btnText">Generate Documents</span>
                     <span id="btnLoading" class="loading" style="display: none;"></span>
@@ -335,6 +342,7 @@
             const documentType = document.getElementById('documentType').value;
             const complexity = document.getElementById('complexity').value;
             const maxCost = parseFloat(document.getElementById('maxCost').value);
+            const testMode = document.getElementById('testMode').checked;
 
             if (userIdea.length < 50) {
                 showStatus('Please provide at least 50 characters describing your idea.', 'error');
@@ -347,13 +355,14 @@
             const btnLoading = document.getElementById('btnLoading');
 
             btn.disabled = true;
-            btnText.textContent = 'Generating...';
+            btnText.textContent = testMode ? 'Generating Test Documents...' : 'Generating...';
             btnLoading.style.display = 'inline-block';
 
-            showStatus('🔄 Processing your request... This may take a moment.', 'info');
+            showStatus(testMode ? '🧪 Generating test documents...' : '🔄 Processing your request... This may take a moment.', 'info');
 
             try {
-                const response = await fetch('/api/v1/generate', {
+                const endpoint = testMode ? '/api/v1/generate-test' : '/api/v1/generate';
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -439,7 +448,7 @@
             let html = '<div class="document-section">';
             html += `<h3>Business Requirements Document</h3>`;
             html += `<p><strong>Document ID:</strong> ${brd.document_id}</p>`;
-            html += `<p><strong>Project:</strong> ${brd.project_name || 'N/A'}</p>`;
+            html += `<p><strong>Title:</strong> ${brd.title || 'N/A'}</p>`;
             html += `<p><strong>Status:</strong> ${brd.status}</p>`;
 
             if (brd.executive_summary) {

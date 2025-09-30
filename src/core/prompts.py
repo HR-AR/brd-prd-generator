@@ -122,9 +122,10 @@ Create a professional BRD with the following structure and requirements:
 
 6. STAKEHOLDERS:
    Identify 3-5 key stakeholders with:
-   - name: Role/title (not personal names)
+   - name: Role/title (e.g., "Product Owner", "Engineering Lead")
    - role: Their involvement in the project
-   - interest_influence: high/medium/low
+   - interest_level: "high", "medium", or "low"
+   - influence_level: "high", "medium", or "low"
 
 7. REQUIREMENTS:
    Create 8-12 business requirements with:
@@ -164,8 +165,61 @@ IMPORTANT REQUIREMENTS:
 - Ensure professional business language throughout
 - Make content realistic and actionable
 - Ensure all IDs follow the specified format
+- document_id MUST be exactly 6 digits: "BRD-123456" format
+- ALL objective_ids must be exactly 3 digits: "OBJ-001" format
 
-Return the complete BRD as a structured JSON document.
+REQUIRED JSON STRUCTURE EXAMPLE:
+{{
+  "document_id": "BRD-123456",
+  "version": "1.0.0",
+  "title": "Your BRD Title Here",
+  "executive_summary": "At least 100 characters summary...",
+  "business_context": "At least 200 characters of context...",
+  "problem_statement": "At least 100 characters problem statement...",
+  "objectives": [
+    {{
+      "objective_id": "OBJ-001",
+      "description": "Increase user engagement by 25% within 6 months",
+      "success_criteria": ["Achieve 10,000 DAU", "Maintain 4.5+ app rating"],
+      "business_value": "Higher retention drives revenue growth",
+      "priority": "high",
+      "kpi_metrics": ["Daily Active Users", "User Retention Rate"]
+    }}
+  ],
+  "scope": {{
+    "in_scope": ["Feature 1", "Feature 2", "Feature 3"],
+    "out_of_scope": ["Future feature 1", "Future feature 2"]
+  }},
+  "stakeholders": [
+    {{
+      "name": "Product Owner",
+      "role": "Decision maker and business sponsor",
+      "interest_level": "high",
+      "influence_level": "high"
+    }}
+  ],
+  "success_metrics": ["Metric 1", "Metric 2", "Metric 3"],
+  "constraints": ["Budget constraint", "Timeline constraint"],
+  "assumptions": ["Assumption 1", "Assumption 2"],
+  "risks": [
+    {{
+      "risk": "Technical risk description",
+      "impact": "high",
+      "mitigation": "Mitigation strategy"
+    }}
+  ],
+  "timeline": {{
+    "milestones": [
+      {{
+        "name": "MVP Launch",
+        "date": "2025-06-01",
+        "deliverables": ["Feature 1", "Feature 2"]
+      }}
+    ]
+  }}
+}}
+
+Return ONLY valid JSON matching this exact structure. Do not include any markdown formatting or code blocks.
 """
 
     def _get_prd_template(self) -> str:
@@ -285,8 +339,51 @@ IMPORTANT REQUIREMENTS:
 - Include specific metrics and targets
 - Ensure technical accuracy
 - Make content actionable and realistic
+- document_id MUST be exactly 6 digits: "PRD-123456" format
+- ALL IDs must be exactly 3 digits: "US-001", "TR-001", "PERSONA-001" format
 
-Return the complete PRD as a structured JSON document.
+REQUIRED JSON STRUCTURE EXAMPLE:
+{{
+  "document_id": "PRD-123456",
+  "version": "1.0.0",
+  "product_name": "Product Name",
+  "product_vision": "At least 50 characters describing the product vision...",
+  "target_audience": ["Audience segment 1", "Audience segment 2"],
+  "value_proposition": "At least 50 characters describing unique value...",
+  "user_stories": [
+    {{
+      "story_id": "US-001",
+      "persona_id": "PERSONA-001",
+      "story": "As a user, I want to track my progress so that I can achieve my goals",
+      "acceptance_criteria": ["Criterion 1", "Criterion 2"],
+      "priority": "high",
+      "story_points": 5,
+      "dependencies": []
+    }}
+  ],
+  "features": [
+    {{
+      "feature_id": "FEAT-001",
+      "name": "Feature Name",
+      "description": "Feature description",
+      "priority": "high"
+    }}
+  ],
+  "technical_requirements": [
+    {{
+      "requirement_id": "TR-001",
+      "category": "architecture",
+      "description": "At least 20 characters technical requirement description",
+      "technology_stack": ["Technology 1", "Technology 2"],
+      "constraints": ["Constraint 1", "Constraint 2"]
+    }}
+  ],
+  "technology_stack": ["Tech 1", "Tech 2", "Tech 3"],
+  "acceptance_criteria": ["Criteria 1", "Criteria 2"],
+  "metrics_and_kpis": ["KPI 1", "KPI 2", "KPI 3"]
+}}
+
+Return ONLY valid JSON matching this exact structure. Do not include any markdown formatting or code blocks.
 """
 
     def build_improvement_prompt(
