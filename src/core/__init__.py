@@ -62,6 +62,11 @@ from .exceptions import (
     NoAvailableProviderError
 )
 
+# Import new modules
+from .generator import DocumentGenerator
+from .validator import DocumentValidator
+from .prompts import PromptBuilder
+
 __all__ = [
     # Enums
     'DocumentType',
@@ -107,5 +112,10 @@ __all__ = [
     'InvalidConfigurationError',
     'FactoryError',
     'UnsupportedProviderError',
-    'NoAvailableProviderError'
+    'NoAvailableProviderError',
+
+    # Generator and utilities
+    'DocumentGenerator',
+    'DocumentValidator',
+    'PromptBuilder'
 ]
